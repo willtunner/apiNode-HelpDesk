@@ -189,8 +189,15 @@ router.put('/', (req, res, next) => {
                 }
 
                 conn.query(
-                    `UPDATE pedidos SET quantidade = ?, id_produto = ? WHERE  id_pedido = ?;`,
-                    [req.body.quantidade, req.body.id_produto, req.body.id_pedido],
+                    `UPDATE pedidos SET 
+                    quantidade = ?, 
+                    id_produto = ? 
+                    WHERE  id_pedido = ?;`,
+                    [
+                        req.body.quantidade, 
+                        req.body.id_produto, 
+                        req.body.id_pedido
+                    ],
                     // CallBack
                     (error, result, field) => {
                         // Fecha a conexão
