@@ -111,7 +111,7 @@ router.get('/:id_pedido', (req, res, next) => {
 
                 if (result.length == 0) {
                     return res.status(404).send({
-                        mensagem: 'Não foi encontrado produto com esse id'
+                        mensagem: 'Não foi encontrado pedido com esse id'
                     })
                 }
 
@@ -170,5 +170,57 @@ router.delete('/', (req, res, next) => {
         )
     });
 });
+
+
+// Altera um pedido
+router.put('/', (req, res, next) => {
+    mysql.getConnection((error, conn) => {
+
+        if (error) { return res.status(500).send({ error: error }) }
+
+        conn.query('SELECT * FROM produtos WHERE id_produto = ?',
+            [req.body.id_produto],
+            (error, result, field) => {
+                if (error) { return res.status(500).send({ error: error }) }
+                if (result.length == 0) {
+                    return res.status(404).send({
+                        mensagem: 'Produto não encontrado'
+                    })
+                }
+
+                conn.query(
+                    `UPDATE pedidos SET quantidade = ?, id_produto = ? WHERE  id_pedido = ?;`,
+                    [req.body.quantidade, req.body.id_produto, req.body.id_pedido],
+                    // CallBack
+                    (error, result, field) => {
+                        // Fecha a conexão
+                        // Pool de conexões tem um limite de conexões abertas
+                        conn.release();
+
+                        if (error) { return res.status(500).send({ error: error }) }
+
+                        // Response criado - passo 7
+                        const response = {
+                            mensagem: 'Pedido atualizado com Sucesso',
+                            produtoAtualizado: {
+                                id_pedido: req.body.id_pedido,
+                                quantidade: req.body.quantidade,
+                                id_produto: req.body.id_produto,
+                                request: {
+                                    tipo: 'GET',
+                                    descricao: 'Atualiza um pedido',
+                                    url: 'http://localhost:3000/pedidos/' + req.body.id_pedido
+                                }
+                            }
+                        }
+
+                        // status 201: add 
+                        res.status(202).send(response);
+                    }
+                )
+            });
+    }); // GetConnection
+});
+
 
 module.exports = router;

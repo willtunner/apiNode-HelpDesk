@@ -65,7 +65,7 @@ router.post('/', (req, res, next) => {
 
         conn.query(
             'INSERT INTO empresas (name, phone, cnpj, obs, ip_scef, mac_scef, conexao_scef, ip_nfce, mac_nfce, conexao_nfce, ip_nfe, mac_nfe, conexao_nfe, ip_mobile, ip_coletor, version_estoque, version_nfce, version_nfe, version_checkout, version_sisseg) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [req.body.name, req.body.phone, req.body.cnpj, req.body.obs, req.body.ip_scef, req.body.mac_scef, req.body.conexao_scef, req.body.ip_nfce, req.body.mac_nfce, req.body.conexao_nfce, req.body.ip_nfe, req.body.mac_nfe, req.body.conexao_nfe, req.body.ip_mobile, req.body.ip_coletor, req.body.version_estoque, req.body.version_nfce, req.body.version_nfe, req.body.version_checkout, req.body.version_sisseg ],
+            [req.body.name, req.body.phone, req.body.cnpj, req.body.obs, req.body.ip_scef, req.body.mac_scef, req.body.conexao_scef, req.body.ip_nfce, req.body.mac_nfce, req.body.conexao_nfce, req.body.ip_nfe, req.body.mac_nfe, req.body.conexao_nfe, req.body.ip_mobile, req.body.ip_coletor, req.body.version_estoque, req.body.version_nfce, req.body.version_nfe, req.body.version_checkout, req.body.version_sisseg],
             // CallBack
             (error, result, field) => {
                 // Fecha a conexão
@@ -132,7 +132,7 @@ router.get('/:id_emp', (req, res, next) => {
                 if (error) { return res.status(500).send({ error: error }) }
                 // Response criado - passo 7
 
-                if(result.length == 0){
+                if (result.length == 0) {
                     return res.status(404).send({
                         mensagem: 'Não foi encontrado produto com esse id'
                     })
@@ -176,102 +176,115 @@ router.get('/:id_emp', (req, res, next) => {
 });
 
 // Altera um produto
-router.patch('/', (req, res, next) => {
+router.put('/', (req, res, next) => {
     mysql.getConnection((error, conn) => {
 
         if (error) { return res.status(500).send({ error: error }) }
 
-        conn.query(
-            `UPDATE empresas SET 
-            name = ?, 
-            phone = ?, 
-            cnpj = ?, 
-            obs = ?, 
-            ip_scef = ?, 
-            mac_scef = ?, 
-            conexao_scef = ?, 
-            ip_nfce = ?, 
-            mac_nfce = ?, 
-            conexao_nfce = ?, 
-            ip_nfe = ?, 
-            mac_nfe = ?, 
-            conexao_nfe = ?, 
-            ip_mobile = ?, 
-            ip_coletor = ?, 
-            version_estoque = ?, 
-            version_nfce = ?, 
-            version_nfe = ?, 
-            version_checkout = ?, 
-            version_sisseg = ? 
-            where id_emp = ?`,
-            [
-                req.body.name, 
-                req.body.phone, 
-                req.body.cnpj, 
-                req.body.obs, 
-                req.body.ip_scef, 
-                req.body.mac_scef, 
-                req.body.conexao_scef, 
-                req.body.ip_nfce, 
-                req.body.mac_nfce, 
-                req.body.conexao_nfce, 
-                req.body.ip_nfe, 
-                req.body.mac_nfe, 
-                req.body.conexao_nfe, 
-                req.body.ip_mobile, 
-                req.body.ip_coletor, 
-                req.body.version_estoque, 
-                req.body.version_nfce, 
-                req.body.version_nfe, 
-                req.body.version_checkout, 
-                req.body.version_sisseg, 
-                req.body.id_emp 
-            ],
-            // CallBack
+        // Verifica se existe a empresa antes de editar
+        conn.query('SELECT * FROM empresas WHERE id_emp = ?',
+            [req.body.id_emp],
             (error, result, field) => {
-                // Fecha a conexão
-                // Pool de conexões tem um limite de conexões abertas
-                conn.release();
-
                 if (error) { return res.status(500).send({ error: error }) }
-
-                // Response criado - passo 7
-                const response = {
-                    mensagem: 'Empresa atualizada com Sucesso',
-                    produtoAtualizado: {
-                        id_emp: result.id_emp,
-                        name: req.body.name,
-                        phone: req.body.phone,
-                        cnpj: req.body.cnpj,
-                        obs: req.body.obs,
-                        ip_scef: req.body.ip_scef,
-                        mac_scef: req.body.mac_scef,
-                        conexao_scef: req.body.conexao_scef,
-                        ip_nfce: req.body.ip_nfce,
-                        mac_nfce: req.body.mac_nfce,
-                        conexao_nfce: req.body.conexao_nfce,
-                        ip_nfe: req.body.ip_nfe,
-                        mac_nfe: req.body.mac_nfe,
-                        conexao_nfe: req.body.conexao_nfe,
-                        ip_mobile: req.body.ip_mobile,
-                        ip_coletor: req.body.ip_coletor,
-                        version_estoque: req.body.version_estoque,
-                        version_nfce: req.body.version_nfce,
-                        version_nfe: req.body.version_nfe,
-                        version_checkout: req.body.version_checkout,
-                        version_sisseg: req.body.version_sisseg,
-                        request: {
-                            tipo: 'GET',
-                            descricao: 'Atualiza um produto',
-                            url: 'http://localhost:3000/empresas/' + req.body.id_emp
-                        }
-                    }
+                if (result.length == 0) {
+                    return res.status(404).send({
+                        mensagem: 'Empresas não encontrada'
+                    })
                 }
 
-                // status 201: add 
-                res.status(202).send(response);
-            }
-        )
+
+                conn.query(
+                    `UPDATE empresas SET 
+                        name = ?, 
+                        phone = ?, 
+                        cnpj = ?, 
+                        obs = ?, 
+                        ip_scef = ?, 
+                        mac_scef = ?, 
+                        conexao_scef = ?, 
+                        ip_nfce = ?, 
+                        mac_nfce = ?, 
+                        conexao_nfce = ?, 
+                        ip_nfe = ?, 
+                        mac_nfe = ?, 
+                        conexao_nfe = ?, 
+                        ip_mobile = ?, 
+                        ip_coletor = ?, 
+                        version_estoque = ?, 
+                        version_nfce = ?, 
+                        version_nfe = ?, 
+                        version_checkout = ?, 
+                        version_sisseg = ? 
+                        where id_emp = ?`,
+                    [
+                        req.body.name,
+                        req.body.phone,
+                        req.body.cnpj,
+                        req.body.obs,
+                        req.body.ip_scef,
+                        req.body.mac_scef,
+                        req.body.conexao_scef,
+                        req.body.ip_nfce,
+                        req.body.mac_nfce,
+                        req.body.conexao_nfce,
+                        req.body.ip_nfe,
+                        req.body.mac_nfe,
+                        req.body.conexao_nfe,
+                        req.body.ip_mobile,
+                        req.body.ip_coletor,
+                        req.body.version_estoque,
+                        req.body.version_nfce,
+                        req.body.version_nfe,
+                        req.body.version_checkout,
+                        req.body.version_sisseg,
+                        req.body.id_emp
+                    ],
+                    // CallBack
+                    (error, result, field) => {
+                        // Fecha a conexão
+                        // Pool de conexões tem um limite de conexões abertas
+                        conn.release();
+
+                        if (error) { return res.status(500).send({ error: error }) }
+
+                        // Response criado - passo 7
+                        const response = {
+                            mensagem: 'Empresa atualizada com Sucesso',
+                            produtoAtualizado: {
+                                id_emp: result.id_emp,
+                                name: req.body.name,
+                                phone: req.body.phone,
+                                cnpj: req.body.cnpj,
+                                obs: req.body.obs,
+                                ip_scef: req.body.ip_scef,
+                                mac_scef: req.body.mac_scef,
+                                conexao_scef: req.body.conexao_scef,
+                                ip_nfce: req.body.ip_nfce,
+                                mac_nfce: req.body.mac_nfce,
+                                conexao_nfce: req.body.conexao_nfce,
+                                ip_nfe: req.body.ip_nfe,
+                                mac_nfe: req.body.mac_nfe,
+                                conexao_nfe: req.body.conexao_nfe,
+                                ip_mobile: req.body.ip_mobile,
+                                ip_coletor: req.body.ip_coletor,
+                                version_estoque: req.body.version_estoque,
+                                version_nfce: req.body.version_nfce,
+                                version_nfe: req.body.version_nfe,
+                                version_checkout: req.body.version_checkout,
+                                version_sisseg: req.body.version_sisseg,
+                                request: {
+                                    tipo: 'GET',
+                                    descricao: 'Atualiza um produto',
+                                    url: 'http://localhost:3000/empresas/' + req.body.id_emp
+                                }
+                            }
+                        }
+
+                        // status 201: add 
+                        res.status(202).send(response);
+                    }
+                )
+            });
     });
 });
 
@@ -305,7 +318,7 @@ router.delete('/', (req, res, next) => {
                     }
                 }
                 // status 201: add 
-               return res.status(202).send(response);
+                return res.status(202).send(response);
             }
         )
     });
