@@ -9,7 +9,10 @@ router.get('/', (req, res, next) => {
         if (error) { return res.status(500).send({ error: error }) }
 
         conn.query(
-            'SELECT * FROM pedidos',
+            `SELECT pedidos.id_pedido, pedidos.quantidade, produtos.id_produto, produtos.nome, produtos.preco 
+            FROM pedidos 
+            INNER JOIN produtos 
+            ON produtos.id_produto = pedidos.id_produto;`,
             (error, result, fields) => {
                 if (error) { return res.status(500).send({ error: error }) }
 
@@ -25,7 +28,11 @@ router.get('/', (req, res, next) => {
                         return {
                             id_pedido: pedido.id_pedido,
                             quantidade: pedido.quantidade,
-                            id_produto: pedido.id_produto,
+                            produto: {
+                                id_produto: pedido.id_produto,
+                                nome: pedido.nome,
+                                preco: pedido.preco
+                            },
                             request: {
                                 tipo: 'GET',
                                 descricao: 'Retorna todos os pedidos',
@@ -194,8 +201,8 @@ router.put('/', (req, res, next) => {
                     id_produto = ? 
                     WHERE  id_pedido = ?;`,
                     [
-                        req.body.quantidade, 
-                        req.body.id_produto, 
+                        req.body.quantidade,
+                        req.body.id_produto,
                         req.body.id_pedido
                     ],
                     // CallBack
