@@ -2,6 +2,25 @@ const express = require('express');
 const router = express.Router();
 // no arquivo mysql.js está exportando como pool
 const mysql = require('../mysql').pool;
+// Importa o multer para fazer upload de imagens
+const multer = require('multer');
+
+//Adiciona outras propriedades ao multer
+const storage = multer.diskStorage({
+    // cb = callback
+    destination: function (req, file, cb) {
+        cb(null, './uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Pega o nome original do arquivo e acrescenta uma data no inicio para ficar com nome diferente
+        cb(null, new Date().toISOString() + file.originalname);
+    }
+});
+
+
+// Adiciona ao multer o destinos das imagens
+// Liberar permissões só tirar a barra da frente
+const upload = multer({ storage: storage });
 
 // Lista todos os produtos
 router.get('/', (req, res, next) => {
@@ -42,7 +61,8 @@ router.get('/', (req, res, next) => {
 });
 
 // Cadastra produto
-router.post('/', (req, res, next) => {
+router.post('/', upload.single('produto_imagem'), (req, res, next) => {
+    console.log(req.file);
 
     // INSERT NO BANCO
     mysql.getConnection((error, conn) => {
@@ -99,7 +119,7 @@ router.get('/:id_produto', (req, res, next) => {
                 if (error) { return res.status(500).send({ error: error }) }
                 // Response criado - passo 7
 
-                if(result.length == 0){
+                if (result.length == 0) {
                     return res.status(404).send({
                         mensagem: 'Não foi encontrado produto com esse id'
                     })
@@ -194,7 +214,7 @@ router.delete('/', (req, res, next) => {
                     }
                 }
                 // status 201: add 
-               return res.status(202).send(response);
+                return res.status(202).send(response);
             }
         )
     });
