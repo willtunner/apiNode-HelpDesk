@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
+// coloca pasta uploads como publica
+app.use('/uploads', express.static('uploads'));
 const bodyparser = require("body-parser");
 
 

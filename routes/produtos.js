@@ -12,15 +12,35 @@ const storage = multer.diskStorage({
         cb(null, './uploads/');
     },
     filename: function (req, file, cb) {
+        let data = new Date().toISOString().replace(/:/g, '-') + '-';
         // Pega o nome original do arquivo e acrescenta uma data no inicio para ficar com nome diferente
-        cb(null, new Date().toISOString() + file.originalname);
+        cb(null, data + file.originalname );
     }
 });
 
+// Filtro para limitar o tamanho da imagem 
+const fileFilter = (req, file, cb) =>{
+
+    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+        // Trate o erro onde está null
+        cb(null, true);
+    }else{
+        cb(null, false)
+    }
+}
 
 // Adiciona ao multer o destinos das imagens
 // Liberar permissões só tirar a barra da frente
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    // Regra de tamanho maximo de arquivo
+    // 1024 * 1024 = 1mb * 5 = 5mb
+    limits:{
+        fileSize: 1024 * 1024 * 5
+    },
+    // Passa os filtros para aceitar arquivos jpeg criado acima
+    fileFilter: fileFilter
+});
 
 // Lista todos os produtos
 router.get('/', (req, res, next) => {
@@ -45,6 +65,7 @@ router.get('/', (req, res, next) => {
                             id_produto: prod.id_produto,
                             nome: prod.nome,
                             preco: prod.preco,
+                            imagem_produto: prod.imagem_produto,
                             request: {
                                 tipo: 'GET',
                                 descricao: 'Retorna todos os produtos',
@@ -66,12 +87,15 @@ router.post('/', upload.single('produto_imagem'), (req, res, next) => {
 
     // INSERT NO BANCO
     mysql.getConnection((error, conn) => {
-
         if (error) { return res.status(500).send({ error: error }) }
 
         conn.query(
-            'INSERT INTO produtos (nome, preco) VALUES (?,?)',
-            [req.body.nome, req.body.preco],
+            'INSERT INTO produtos (nome, preco, imagem_produto) VALUES (?, ?, ?)',
+            [
+                req.body.nome, 
+                req.body.preco,
+                req.file.path // Pega o caminho da imagem e passa para o banco
+            ],
             // CallBack
             (error, result, field) => {
                 // Fecha a conexão
@@ -87,8 +111,9 @@ router.post('/', upload.single('produto_imagem'), (req, res, next) => {
                         id_produto: result.id_produto,
                         nome: req.body.nome,
                         preco: req.body.preco,
+                        imagem_produto: req.file.path,
                         request: {
-                            tipo: 'POST',
+                            tipo: 'GET',
                             descricao: 'Insere um produto',
                             url: 'http://localhost:3000/produtos'
                         }
@@ -146,7 +171,7 @@ router.get('/:id_produto', (req, res, next) => {
 });
 
 // Altera um produto
-router.patch('/', (req, res, next) => {
+router.put('/', (req, res, next) => {
     mysql.getConnection((error, conn) => {
 
         if (error) { return res.status(500).send({ error: error }) }
